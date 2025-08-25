@@ -13,3 +13,638 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// Multi-tenant Organization model
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  domain    String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // CRM entities belonging to this organization
+  leads         Lead[]
+  accounts      Account[]
+  contacts      Contact[]
+  opportunities Opportunity[]
+  activities    Activity[]
+  cases         Case[]
+  quotes        Quote[]
+  orders        Order[]
+  products      Product[]
+  priceBooks    PriceBook[]
+  rfqs          RFQ[]
+  users         User[]
+
+  @@map("organizations")
+}
+
+// User model for RBAC with Clerk
+model User {
+  id             String   @id @default(cuid())
+  clerkId        String   @unique
+  email          String   @unique
+  firstName      String?
+  lastName       String?
+  role           UserRole @default(USER)
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Ownership relationships
+  ownedLeads         Lead[]
+  ownedAccounts      Account[]
+  ownedContacts      Contact[]
+  ownedOpportunities Opportunity[]
+  ownedActivities    Activity[]
+  ownedCases         Case[]
+  ownedQuotes        Quote[]
+  ownedOrders        Order[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  MANAGER
+  SALES_REP
+  SUPPORT_REP
+  USER
+}
+
+model Lead {
+  id             String     @id @default(cuid())
+  firstName      String
+  lastName       String
+  company        String?
+  title          String?
+  department     String?
+  email          String?
+  phone          String?
+  mobile         String?
+  fax            String?
+  leadSource     LeadSource @default(OTHER)
+  industry       String?
+  annualRevenue  Float?
+  employees      Int?
+  rating         Rating     @default(COLD)
+  status         LeadStatus @default(OPEN)
+  street         String?
+  city           String?
+  state          String?
+  postalCode     String?
+  country        String?
+  ownerId        String
+  organizationId String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  owner        User         @relation(fields: [ownerId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  activities   Activity[]
+
+  @@map("leads")
+}
+
+enum LeadSource {
+  WEB
+  PARTNER
+  EVENT
+  REFERRAL
+  ADVERTISEMENT
+  COLD_CALL
+  EMAIL
+  OTHER
+}
+
+enum Rating {
+  HOT
+  WARM
+  COLD
+}
+
+enum LeadStatus {
+  OPEN
+  WORKING
+  QUALIFIED
+  UNQUALIFIED
+}
+
+model Account {
+  id              String      @id @default(cuid())
+  name            String
+  accountNumber   String?     @unique
+  parentId        String?
+  type            AccountType @default(PROSPECT)
+  industry        String?
+  annualRevenue   Float?
+  employees       Int?
+  ownership       Ownership   @default(PRIVATE)
+  tickerSymbol    String?
+  website         String?
+  phone           String?
+  fax             String?
+  billingStreet   String?
+  billingCity     String?
+  billingState    String?
+  billingPostal   String?
+  billingCountry  String?
+  shippingStreet  String?
+  shippingCity    String?
+  shippingState   String?
+  shippingPostal  String?
+  shippingCountry String?
+  slaLevel        String?
+  active          Boolean     @default(true)
+  ownerId         String
+  organizationId  String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  owner        User         @relation(fields: [ownerId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent       Account?     @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children     Account[]    @relation("AccountHierarchy")
+
+  contacts      Contact[]
+  opportunities Opportunity[]
+  cases         Case[]
+  activities    Activity[]
+  quotes        Quote[]
+  orders        Order[]
+
+  @@map("accounts")
+}
+
+enum AccountType {
+  CUSTOMER
+  PARTNER
+  PROSPECT
+  VENDOR
+  COMPETITOR
+}
+
+enum Ownership {
+  PUBLIC
+  PRIVATE
+  SUBSIDIARY
+}
+
+model Contact {
+  id             String      @id @default(cuid())
+  firstName      String
+  lastName       String
+  accountId      String
+  title          String?
+  department     String?
+  email          String?
+  phone          String?
+  mobile         String?
+  fax            String?
+  mailingStreet  String?
+  mailingCity    String?
+  mailingState   String?
+  mailingPostal  String?
+  mailingCountry String?
+  birthdate      DateTime?
+  reportsToId    String?
+  assistantName  String?
+  assistantPhone String?
+  leadSource     LeadSource?
+  ownerId        String
+  organizationId String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  account       Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  owner         User         @relation(fields: [ownerId], references: [id])
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reportsTo     Contact?     @relation("ContactHierarchy", fields: [reportsToId], references: [id])
+  directReports Contact[]    @relation("ContactHierarchy")
+
+  opportunityRoles OpportunityContactRole[]
+  cases            Case[]
+  activities       Activity[]
+  quotes           Quote[]
+
+  @@map("contacts")
+}
+
+model Opportunity {
+  id               String           @id @default(cuid())
+  name             String
+  accountId        String
+  type             OpportunityType  @default(NEW_BUSINESS)
+  leadSource       LeadSource?
+  stage            OpportunityStage @default(PROSPECTING)
+  probability      Float            @default(0)
+  forecastCategory ForecastCategory @default(PIPELINE)
+  amount           Float?
+  expectedRevenue  Float?
+  closeDate        DateTime?
+  competitors      String?
+  nextStep         String?
+  description      String?
+  ownerId          String
+  organizationId   String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  account      Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  owner        User         @relation(fields: [ownerId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  contactRoles OpportunityContactRole[]
+  lineItems    OpportunityLineItem[]
+  activities   Activity[]
+  quotes       Quote[]
+  orders       Order[]
+
+  @@map("opportunities")
+}
+
+enum OpportunityType {
+  NEW_BUSINESS
+  RENEWAL
+  EXPANSION
+  UPSELL
+}
+
+enum OpportunityStage {
+  PROSPECTING
+  QUALIFICATION
+  NEEDS_ANALYSIS
+  VALUE_PROPOSITION
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum ForecastCategory {
+  OMITTED
+  PIPELINE
+  BEST_CASE
+  COMMIT
+  CLOSED
+}
+
+model OpportunityContactRole {
+  id            String      @id @default(cuid())
+  opportunityId String
+  contactId     String
+  role          ContactRole @default(INFLUENCER)
+  isPrimary     Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  contact     Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([opportunityId, contactId])
+  @@map("opportunity_contact_roles")
+}
+
+enum ContactRole {
+  DECISION_MAKER
+  INFLUENCER
+  EVALUATOR
+  CHAMPION
+  END_USER
+}
+
+model Activity {
+  id             String         @id @default(cuid())
+  type           ActivityType
+  subject        String
+  description    String?
+  status         ActivityStatus @default(NOT_STARTED)
+  priority       Priority       @default(NORMAL)
+  dueDate        DateTime?
+  startDateTime  DateTime?
+  endDateTime    DateTime?
+  location       String?
+  duration       Int? // in minutes
+  callResult     String?
+  emailFrom      String?
+  emailTo        String?
+  emailCc        String?
+  emailBcc       String?
+  isRecurring    Boolean        @default(false)
+  recurrenceRule String?
+  ownerId        String
+  organizationId String
+
+  // Polymorphic relationships
+  leadId        String?
+  accountId     String?
+  contactId     String?
+  opportunityId String?
+  caseId        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner        User         @relation(fields: [ownerId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  account      Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contact      Contact?     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  opportunity  Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  case         Case?        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@map("activities")
+}
+
+enum ActivityType {
+  TASK
+  CALL
+  EMAIL
+  MEETING
+  EVENT
+}
+
+enum ActivityStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  WAITING
+  DEFERRED
+}
+
+enum Priority {
+  HIGH
+  NORMAL
+  LOW
+}
+
+model Case {
+  id             String     @id @default(cuid())
+  caseNumber     String     @unique
+  subject        String
+  description    String?
+  accountId      String?
+  contactId      String?
+  type           CaseType   @default(QUESTION)
+  status         CaseStatus @default(NEW)
+  priority       Priority   @default(NORMAL)
+  origin         CaseOrigin @default(PHONE)
+  escalated      Boolean    @default(false)
+  closedDate     DateTime?
+  ownerId        String
+  organizationId String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  account      Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contact      Contact?     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  owner        User         @relation(fields: [ownerId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  activities   Activity[]
+
+  @@map("cases")
+}
+
+enum CaseType {
+  PROBLEM
+  REQUEST
+  QUESTION
+  FEATURE_REQUEST
+}
+
+enum CaseStatus {
+  NEW
+  WORKING
+  ESCALATED
+  CLOSED
+}
+
+enum CaseOrigin {
+  PHONE
+  EMAIL
+  WEB
+  CHAT
+  PORTAL
+}
+
+model Quote {
+  id             String      @id @default(cuid())
+  quoteNumber    String      @unique
+  name           String
+  accountId      String?
+  contactId      String?
+  opportunityId  String?
+  expirationDate DateTime?
+  status         QuoteStatus @default(DRAFT)
+  totalPrice     Float       @default(0)
+  terms          String?
+  conditions     String?
+  ownerId        String
+  organizationId String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  account      Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contact      Contact?     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  opportunity  Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  owner        User         @relation(fields: [ownerId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  lineItems QuoteLineItem[]
+  orders    Order[]
+
+  @@map("quotes")
+}
+
+enum QuoteStatus {
+  DRAFT
+  PRESENTED
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  orderNumber    String      @unique
+  accountId      String?
+  opportunityId  String?
+  quoteId        String?
+  status         OrderStatus @default(DRAFT)
+  startDate      DateTime?
+  endDate        DateTime?
+  contractTerm   Int? // in months
+  totalAmount    Float       @default(0)
+  ownerId        String
+  organizationId String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  account      Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  opportunity  Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  quote        Quote?       @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  owner        User         @relation(fields: [ownerId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  lineItems OrderLineItem[]
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  DRAFT
+  ACTIVATED
+  CANCELLED
+  COMPLETED
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  name           String
+  productCode    String?  @unique
+  description    String?
+  active         Boolean  @default(true)
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  priceBookEntries     PriceBookEntry[]
+  opportunityLineItems OpportunityLineItem[]
+  quoteLineItems       QuoteLineItem[]
+  orderLineItems       OrderLineItem[]
+  rfqLineItems         RFQLineItem[]
+
+  @@map("products")
+}
+
+model PriceBook {
+  id             String   @id @default(cuid())
+  name           String
+  active         Boolean  @default(true)
+  isStandard     Boolean  @default(false)
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  entries      PriceBookEntry[]
+
+  @@map("price_books")
+}
+
+model PriceBookEntry {
+  id          String   @id @default(cuid())
+  priceBookId String
+  productId   String
+  unitPrice   Float
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  priceBook PriceBook @relation(fields: [priceBookId], references: [id], onDelete: Cascade)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([priceBookId, productId])
+  @@map("price_book_entries")
+}
+
+model OpportunityLineItem {
+  id            String   @id @default(cuid())
+  opportunityId String
+  productId     String
+  quantity      Float    @default(1)
+  unitPrice     Float
+  totalPrice    Float
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("opportunity_line_items")
+}
+
+model QuoteLineItem {
+  id          String   @id @default(cuid())
+  quoteId     String
+  productId   String
+  quantity    Float    @default(1)
+  unitPrice   Float
+  totalPrice  Float
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  quote   Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("quote_line_items")
+}
+
+model OrderLineItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String
+  quantity    Float    @default(1)
+  unitPrice   Float
+  totalPrice  Float
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("order_line_items")
+}
+
+model RFQ {
+  id             String    @id @default(cuid())
+  rfqNumber      String    @unique
+  name           String
+  rfqDate        DateTime  @default(now())
+  dueDate        DateTime?
+  status         RFQStatus @default(DRAFT)
+  currency       String    @default("USD")
+  description    String?
+  accountId      String?
+  contactId      String?
+  organizationId String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lineItems    RFQLineItem[]
+
+  @@map("rfqs")
+}
+
+enum RFQStatus {
+  DRAFT
+  SUBMITTED
+  QUOTED
+  CLOSED
+}
+
+model RFQLineItem {
+  id            String   @id @default(cuid())
+  rfqId         String
+  productId     String?
+  description   String
+  quantity      Float    @default(1)
+  targetPrice   Float?
+  deliveryTerms String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  rfq     RFQ      @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("rfq_line_items")
+}
