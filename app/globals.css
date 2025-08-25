@@ -4,40 +4,40 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated color tokens to match Salesforce-style CRM design brief */
+  /* Updated color tokens to match onboarding design brief */
   --background: #ffffff;
-  --foreground: #475569;
-  --card: #ecfeff;
-  --card-foreground: #164e63;
+  --foreground: #374151;
+  --card: #fef2f2;
+  --card-foreground: #374151;
   --popover: #ffffff;
-  --popover-foreground: #475569;
-  --primary: #164e63;
+  --popover-foreground: #374151;
+  --primary: #dc2626;
   --primary-foreground: #ffffff;
-  --secondary: #84cc16;
-  --secondary-foreground: #164e63;
-  --muted: #f0fdf4;
+  --secondary: #f59e0b;
+  --secondary-foreground: #ffffff;
+  --muted: #f8fafc;
   --muted-foreground: #374151;
-  --accent: #84cc16;
-  --accent-foreground: #164e63;
-  --destructive: #ef4444;
+  --accent: #f59e0b;
+  --accent-foreground: #374151;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #d1d5db;
-  --input: #f8fafc;
-  --ring: rgba(22, 78, 99, 0.5);
-  --chart-1: #6366f1;
-  --chart-2: #f59e0b;
-  --chart-3: #10b981;
-  --chart-4: #ec4899;
-  --chart-5: #3b82f6;
+  --border: #e5e7eb;
+  --input: #fef2f2;
+  --ring: #dc2626;
+  --chart-1: #f59e0b;
+  --chart-2: #dc2626;
+  --chart-3: #374151;
+  --chart-4: #fef2f2;
+  --chart-5: #ffffff;
   --radius: 0.5rem;
-  --sidebar: #ecfeff;
-  --sidebar-foreground: #164e63;
-  --sidebar-primary: #164e63;
+  --sidebar: #fef2f2;
+  --sidebar-foreground: #374151;
+  --sidebar-primary: #dc2626;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #84cc16;
-  --sidebar-accent-foreground: #164e63;
-  --sidebar-border: #d1d5db;
-  --sidebar-ring: rgba(22, 78, 99, 0.5);
+  --sidebar-accent: #f59e0b;
+  --sidebar-accent-foreground: #374151;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #dc2626;
 
   /* Priority-specific color tokens */
   --priority-high: #dc2626;
@@ -49,31 +49,31 @@
 }
 
 .dark {
-  /* Updated dark mode tokens for Salesforce-style CRM dashboard */
+  /* Updated dark mode tokens for onboarding design */
   --background: #0f172a;
   --foreground: #f1f5f9;
   --card: #1e293b;
   --card-foreground: #94a3b8;
   --popover: #1e293b;
   --popover-foreground: #f1f5f9;
-  --primary: #84cc16;
-  --primary-foreground: #164e63;
-  --secondary: #164e63;
+  --primary: #dc2626;
+  --primary-foreground: #ffffff;
+  --secondary: #f59e0b;
   --secondary-foreground: #ffffff;
   --muted: #334155;
   --muted-foreground: #94a3b8;
-  --accent: #84cc16;
-  --accent-foreground: #164e63;
+  --accent: #f59e0b;
+  --accent-foreground: #374151;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: #334155;
   --input: #1e293b;
-  --ring: rgba(132, 204, 22, 0.5);
-  --chart-1: #6366f1;
-  --chart-2: #f59e0b;
-  --chart-3: #10b981;
-  --chart-4: #ec4899;
-  --chart-5: #3b82f6;
+  --ring: #dc2626;
+  --chart-1: #f59e0b;
+  --chart-2: #dc2626;
+  --chart-3: #374151;
+  --chart-4: #fef2f2;
+  --chart-5: #ffffff;
   --sidebar: #0f172a;
   --sidebar-foreground: #f1f5f9;
   --sidebar-primary: #1e293b;
@@ -81,7 +81,7 @@
   --sidebar-accent: #334155;
   --sidebar-accent-foreground: #f1f5f9;
   --sidebar-border: #334155;
-  --sidebar-ring: rgba(132, 204, 22, 0.5);
+  --sidebar-ring: #dc2626;
 
   /* Dark mode priority colors */
   --priority-high: #ef4444;
@@ -130,8 +130,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   /* Updated font tokens to match design brief typography */
-  --font-sans: "Source Sans Pro", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-sans: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Manrope", ui-serif, Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Priority color tokens */
